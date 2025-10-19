@@ -1,6 +1,8 @@
 '@harperdb/nextjs':
   port: 9926
   dev: true
+  package: '@harperdb/nextjs'
+  files: '*'
 
 graphqlSchema:
   files: 'schema.graphql'    # This tells HarperDB to load your schema

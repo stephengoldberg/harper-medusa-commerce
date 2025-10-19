@@ -1,11 +1,23 @@
-// @ts-ignore
-const { Order } = tables;
+async function getOrders() {
+    'use server'
+
+    try {
+        // @ts-ignore
+        const { Order } = tables;
+
+        const orders = await Order.search({
+            limit: 100,
+            select: ['*', 'customer.*', 'items.*']
+        });
+
+        return orders;
+    } catch (error) {
+        return [];
+    }
+}
 
 export default async function AdminOrdersPage() {
-    const orders = await Order.search({
-        limit: 100,
-        select: ['*', 'customer.*', 'items.*']
-    });
+    const orders = await getOrders();
 
     return (
         <div className="p-8">

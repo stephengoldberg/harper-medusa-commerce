@@ -1,22 +1,45 @@
 import { getProducts } from '@/lib/actions'
 
-// @ts-ignore
-const { Order, Customer, Product } = tables;
+async function getAdminStats() {
+    'use server'
+
+    try {
+        // @ts-ignore
+        const { Order, Customer, Product } = tables;
+
+        const orders = await Order.search({ limit: 1000 });
+        const customers = await Customer.search({ limit: 1000 });
+        const products = await Product.search({ limit: 1000 });
+
+        const totalRevenue = orders.reduce((sum: number, order: any) => {
+            return sum + (order.total || 0);
+        }, 0);
+
+        const recentOrders = await Order.search({
+            limit: 10,
+            select: ['*', 'customer.*']
+        });
+
+        return {
+            totalRevenue,
+            ordersCount: orders.length,
+            customersCount: customers.length,
+            productsCount: products.length,
+            recentOrders
+        };
+    } catch (error) {
+        return {
+            totalRevenue: 0,
+            ordersCount: 0,
+            customersCount: 0,
+            productsCount: 0,
+            recentOrders: []
+        };
+    }
+}
 
 export default async function AdminDashboard() {
-    // Get stats
-    const orders = await Order.search({ limit: 1000 });
-    const customers = await Customer.search({ limit: 1000 });
-    const products = await Product.search({ limit: 1000 });
-
-    const totalRevenue = orders.reduce((sum: number, order: any) => {
-        return sum + (order.total || 0);
-    }, 0);
-
-    const recentOrders = await Order.search({
-        limit: 10,
-        select: ['*', 'customer.*']
-    });
+    const stats = await getAdminStats();
 
     return (
         <div className="p-8">
@@ -27,28 +50,28 @@ export default async function AdminDashboard() {
                 <div className="bg-white p-6 rounded-lg border">
                     <div className="text-gray-600 text-sm mb-2">Total Revenue</div>
                     <div className="text-3xl font-bold text-green-600">
-                        ${totalRevenue.toFixed(2)}
+                        ${stats.totalRevenue.toFixed(2)}
                     </div>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg border">
                     <div className="text-gray-600 text-sm mb-2">Total Orders</div>
                     <div className="text-3xl font-bold text-blue-600">
-                        {orders.length}
+                        {stats.ordersCount}
                     </div>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg border">
                     <div className="text-gray-600 text-sm mb-2">Total Customers</div>
                     <div className="text-3xl font-bold text-purple-600">
-                        {customers.length}
+                        {stats.customersCount}
                     </div>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg border">
                     <div className="text-gray-600 text-sm mb-2">Total Products</div>
                     <div className="text-3xl font-bold text-orange-600">
-                        {products.length}
+                        {stats.productsCount}
                     </div>
                 </div>
             </div>
@@ -70,7 +93,7 @@ export default async function AdminDashboard() {
                         </tr>
                         </thead>
                         <tbody className="divide-y">
-                        {recentOrders.map((order: any) => (
+                        {stats.recentOrders.map((order: any) => (
                             <tr key={order.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 text-sm font-medium">{order.id.slice(0, 8)}</td>
                                 <td className="px-6 py-4 text-sm">{order.email}</td>

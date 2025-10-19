@@ -1,9 +1,9 @@
 '@harperdb/nextjs':
-  port: 3000
+  port: 9926
   dev: true
 
 graphqlSchema:
-  files: 'schema.graphql'
+  files: 'schema.graphql'    # This tells HarperDB to load your schema
 
 jsResource:
   files: 'resources.js'

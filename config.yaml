@@ -1,0 +1,10 @@
+'@harperdb/nextjs':
+  port: 3000
+  dev: true
+
+graphqlSchema:
+  files: 'schema.graphql'
+
+jsResource:
+  files: 'resources.js'
+  path: '/api'

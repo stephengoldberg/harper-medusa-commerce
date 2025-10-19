@@ -1,0 +1,183 @@
+
+type Product @table @export {
+  id: ID @primaryKey
+  title: String!
+  description: String
+  handle: String @indexed
+  status: String @indexed
+  thumbnail: String
+  metadata: Any
+  createdAt: Date @createdTime
+  updatedAt: Date @updatedTime
+  
+  variants: [ProductVariant] @relationship(to: "productId")
+  options: [ProductOption] @relationship(to: "productId")
+  images: [ProductImage] @relationship(to: "productId")
+}
+
+type ProductVariant @table @export {
+  id: ID @primaryKey
+  productId: ID @indexed
+  product: Product @relationship(from: "productId")
+  title: String
+  sku: String @indexed
+  inventoryQuantity: Int
+  manageInventory: Boolean
+  allowBackorder: Boolean
+  metadata: Any
+  createdAt: Date @createdTime
+  updatedAt: Date @updatedTime
+  
+  prices: [Price] @relationship(to: "variantId")
+}
+
+type ProductOption @table {
+  id: ID @primaryKey
+  productId: ID @indexed
+  product: Product @relationship(from: "productId")
+  title: String!
+  values: [String]
+}
+
+type ProductImage @table {
+  id: ID @primaryKey
+  productId: ID @indexed
+  product: Product @relationship(from: "productId")
+  url: String!
+  metadata: Any
+}
+
+type Price @table @export {
+  id: ID @primaryKey
+  variantId: ID @indexed
+  variant: ProductVariant @relationship(from: "variantId")
+  amount: Float!
+  currencyCode: String! @indexed
+  regionId: ID @indexed
+  createdAt: Date @createdTime
+}
+
+type Region @table @export {
+  id: ID @primaryKey
+  name: String!
+  currencyCode: String! @indexed
+  taxRate: Float
+  countries: [String]
+  createdAt: Date @createdTime
+}
+
+type Cart @table @export {
+  id: ID @primaryKey
+  customerId: ID @indexed
+  regionId: ID @indexed
+  email: String
+  subtotal: Float
+  tax: Float
+  total: Float
+  discountTotal: Float
+  completedAt: Date
+  createdAt: Date @createdTime
+  updatedAt: Date @updatedTime
+  
+  items: [LineItem] @relationship(to: "cartId")
+  customer: Customer @relationship(from: "customerId")
+  region: Region @relationship(from: "regionId")
+}
+
+type LineItem @table {
+  id: ID @primaryKey
+  cartId: ID @indexed
+  orderId: ID @indexed
+  variantId: ID @indexed
+  
+  cart: Cart @relationship(from: "cartId")
+  order: Order @relationship(from: "orderId")
+  variant: ProductVariant @relationship(from: "variantId")
+  
+  title: String
+  quantity: Int!
+  unitPrice: Float!
+  subtotal: Float
+  total: Float
+  createdAt: Date @createdTime
+}
+
+type Order @table @export {
+  id: ID @primaryKey
+  customerId: ID @indexed
+  cartId: ID @indexed
+  regionId: ID @indexed
+  
+  customer: Customer @relationship(from: "customerId")
+  region: Region @relationship(from: "regionId")
+  
+  email: String!
+  displayId: Int @indexed
+  status: String! @indexed
+  paymentStatus: String! @indexed
+  fulfillmentStatus: String! @indexed
+  
+  subtotal: Float
+  tax: Float
+  total: Float
+  
+  shippingAddress: Any
+  billingAddress: Any
+  metadata: Any
+  createdAt: Date @createdTime
+  
+  items: [LineItem] @relationship(to: "orderId")
+  payments: [Payment] @relationship(to: "orderId")
+}
+
+type Payment @table {
+  id: ID @primaryKey
+  orderId: ID @indexed
+  order: Order @relationship(from: "orderId")
+  amount: Float!
+  currencyCode: String!
+  provider: String! @indexed
+  status: String! @indexed
+  providerId: String
+  metadata: Any
+  createdAt: Date @createdTime
+}
+
+type Customer @table @export {
+  id: ID @primaryKey
+  email: String! @indexed
+  passwordHash: String
+  firstName: String
+  lastName: String
+  phone: String
+  metadata: Any
+  createdAt: Date @createdTime
+  
+  orders: [Order] @relationship(to: "customerId")
+  carts: [Cart] @relationship(to: "customerId")
+}
+
+type InventoryItem @table @export {
+  id: ID @primaryKey
+  sku: String! @indexed
+  variantId: ID @indexed
+  quantity: Int!
+  reservedQuantity: Int
+  locationId: ID @indexed
+  createdAt: Date @createdTime
+}
+
+type Job @table {
+  id: ID @primaryKey
+  type: String! @indexed
+  status: String! @indexed
+  payload: Any
+  result: Any
+  error: String
+  attempts: Int
+  maxAttempts: Int
+  scheduledFor: Date @indexed
+  startedAt: Date
+  completedAt: Date
+  createdAt: Date @createdTime
+}

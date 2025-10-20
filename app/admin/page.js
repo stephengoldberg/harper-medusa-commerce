@@ -1,24 +1,20 @@
-import { getProducts } from '@/lib/actions'
+'use server'
+
+import 'harperdb'
 
 async function getAdminStats() {
-    'use server'
-
     try {
-        // @ts-ignore
-        const { Order, Customer, Product } = tables;
+        const orders = await tables.Order.search({ limit: 1000 })
+        const customers = await tables.Customer.search({ limit: 1000 })
+        const products = await tables.Product.search({ limit: 1000 })
 
-        const orders = await Order.search({ limit: 1000 });
-        const customers = await Customer.search({ limit: 1000 });
-        const products = await Product.search({ limit: 1000 });
+        const totalRevenue = orders.reduce((sum, order) => {
+            return sum + (order.total || 0)
+        }, 0)
 
-        const totalRevenue = orders.reduce((sum: number, order: any) => {
-            return sum + (order.total || 0);
-        }, 0);
-
-        const recentOrders = await Order.search({
-            limit: 10,
-            select: ['*', 'customer.*']
-        });
+        const recentOrders = await tables.Order.search({
+            limit: 10
+        })
 
         return {
             totalRevenue,
@@ -26,20 +22,21 @@ async function getAdminStats() {
             customersCount: customers.length,
             productsCount: products.length,
             recentOrders
-        };
+        }
     } catch (error) {
+        console.error('Error fetching admin stats:', error)
         return {
             totalRevenue: 0,
             ordersCount: 0,
             customersCount: 0,
             productsCount: 0,
             recentOrders: []
-        };
+        }
     }
 }
 
 export default async function AdminDashboard() {
-    const stats = await getAdminStats();
+    const stats = await getAdminStats()
 
     return (
         <div className="p-8">
@@ -93,21 +90,38 @@ export default async function AdminDashboard() {
                         </tr>
                         </thead>
                         <tbody className="divide-y">
-                        {stats.recentOrders.map((order: any) => (
-                            <tr key={order.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 text-sm font-medium">{order.id.slice(0, 8)}</td>
-                                <td className="px-6 py-4 text-sm">{order.email}</td>
-                                <td className="px-6 py-4 text-sm">
-                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
-                      {order.status}
-                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm font-semibold">${order.total?.toFixed(2)}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">
-                                    {new Date(order.createdAt).toLocaleDateString()}
+                        {stats.recentOrders.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                                    No orders yet
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            stats.recentOrders.map((order) => (
+                                <tr key={order.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 text-sm font-medium">
+                                        #{order.id.slice(0, 8)}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        {order.email || order.user_id || 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                                                {order.status || 'pending'}
+                                            </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-semibold">
+                                        ${(order.total || 0).toFixed(2)}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                        {order.created_at
+                                            ? new Date(order.created_at).toLocaleDateString()
+                                            : 'N/A'
+                                        }
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                         </tbody>
                     </table>
                 </div>

@@ -1,8 +1,12 @@
-'@harperdb/nextjs':
-  port: 9926
-  dev: true
-  package: '@harperdb/nextjs'
-  files: '*'
+'harper-medusa-commerce':
+  package: .
+  files: '**'
+
+components:
+  '@harperdb/nextjs':
+    package: '@harperdb/nextjs'
+    port: 9926
+    prebuilt: true
 
 graphqlSchema:
   files: 'schema.graphql'    # This tells HarperDB to load your schema

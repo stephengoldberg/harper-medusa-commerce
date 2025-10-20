@@ -8,19 +8,22 @@ async function getAdminStats() {
         const customers = await tables.Customer.search({ limit: 1000 })
         const products = await tables.Product.search({ limit: 1000 })
 
-        const totalRevenue = orders.reduce((sum, order) => {
+        // Ensure arrays before using reduce
+        const ordersArray = Array.isArray(orders) ? orders : []
+        const customersArray = Array.isArray(customers) ? customers : []
+        const productsArray = Array.isArray(products) ? products : []
+
+        const totalRevenue = ordersArray.reduce((sum, order) => {
             return sum + (order.total || 0)
         }, 0)
 
-        const recentOrders = await tables.Order.search({
-            limit: 10
-        })
+        const recentOrders = ordersArray.slice(0, 10)
 
         return {
             totalRevenue,
-            ordersCount: orders.length,
-            customersCount: customers.length,
-            productsCount: products.length,
+            ordersCount: ordersArray.length,
+            customersCount: customersArray.length,
+            productsCount: productsArray.length,
             recentOrders
         }
     } catch (error) {
